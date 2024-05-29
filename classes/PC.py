@@ -14,13 +14,13 @@ class PC:
         self.index = index
         self.gps_time = gps_time
 
-    def open(self, file_path, mode = 'intensity', verbose = False):
+    def open(self, file_path, verbose = False):
         """ open .pcd """
         if file_path.endswith('.pcd'):
             if verbose:
                 start = time()
                 print(f"Opening .pcd file ...")
-            data, ix, ii, ir = PC_UTILS.PCD_OPEN(file_path, verbose)
+            data, ix, ii, ir, ig, iid = PC_UTILS.PCD_OPEN(file_path, verbose)
             if verbose:
                 end = time()-start
                 print(f"Time reading: {end:.3f} s")
@@ -30,12 +30,12 @@ class PC:
             rgb = np.nan_to_num(rgb)
             intensity = np.asarray(data[:,ii]) if ii is not None else None
             intensity = np.nan_to_num(intensity)
+            gps_time = np.nan_to_num(np.asarray(data[:,ig])) if ig is not None else None
+            index = np.nan_to_num(np.asarray(data[:,iid])) if iid is not None else None
             if verbose:
-                print("points: ")
-                print(points)
                 end = time()-start
                 print(f"Time stacking data: {end:.3f} s")
-            self.points, self.intensity = points, intensity
+            self.points, self.intensity, self.rgb, self.index, self.gps_time = points, intensity, rgb, index, gps_time
 
         if file_path.endswith('.las'):
             """ open .las """
@@ -48,6 +48,8 @@ class PC:
             rgb = np.full(points.shape[0], 0)
             index = np.full(points.shape[0], 0)
             gps_time = np.full(points.shape[0], 0)
+            for dimension in las.point_format.dimensions:
+                print(dimension.name)
             try:
                 intensity = np.asarray(las.intensity, dtype=np.int32)
                 intensity = np.nan_to_num(intensity)
@@ -62,18 +64,16 @@ class PC:
             except AttributeError:
                 pass
             try:
-                index = np.asarray(las.index, dtype=np.int32)
+                index = np.asarray(las.point_source_id, dtype=np.float16)
                 index = np.nan_to_num(index)
             except AttributeError:
                 pass
             try:
-                gps_time = np.asarray(las.gps_time, dtype=np.int32)
+                gps_time = np.asarray(las.GpsTime, dtype=np.float16)
                 gps_time = np.nan_to_num(gps_time)
             except AttributeError:
                 pass
             if verbose:
-                print("points: ")
-                print(points)
                 end = time()-start
                 print(f"Time stacking data: {end:.3f} s")
             self.points, self.intensity, self.rgb, self.index, self.gps_time = points, intensity, rgb, index, gps_time
@@ -139,7 +139,7 @@ class PC:
             if self.intensity is not None:
                 data["intensity"] = self.intensity
             if self.gps_time is not None:
-                data["gps_time"] = self.gps_time
+                data["GpsTime"] = self.gps_time
             if self.index is not None:
                 data["index"] = self.index
             if self.rgb is not None:

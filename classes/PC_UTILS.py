@@ -32,14 +32,14 @@ class PC_UTILS:
         return pc
 
 
-    def PCD(file_path, verbose = False):
-        """ Return data, indexes of fields 'x', 'Intensity' and 'rgb'
+    def PCD_OPEN(file_path, verbose = False):
+        """ Return data, indexes of fields 'x', 'Intensity', 'rgb', 'GpsTime', 'Original_cloud_index'
         Input:
             file_path: string, /path/to/file/example.foo
             verbose: boolean, enable print info
         Return:
             new_cloud_data: data from file
-            ix, ii, ir = integer, indexes of fields 'x', 'Intensity' and 'rgb'
+            ix, ii, ir = integer, indexes of fields 'x', 'Intensity', 'rgb', 'GpsTime', 'Original_cloud_index'
         """
         start = time()
         cloud = pypcd.PointCloud.from_path(file_path)
@@ -61,8 +61,16 @@ class PC_UTILS:
             ir = cloud.get_metadata()["fields"].index('rgb')
         except ValueError:
             ir = None
+        try:
+            ig = cloud.get_metadata()["fields"].index('GpsTime')
+        except ValueError:
+            ig = None
+        try:
+            iid = cloud.get_metadata()["fields"].index('Original_cloud_index')
+        except ValueError:
+            iid = None
         ix = cloud.get_metadata()["fields"].index('x')
-        return new_cloud_data, ix, ii, ir 
+        return new_cloud_data, ix, ii, ir, ig, iid
  
     def shift(points, x, y, z):
         """ Return shifted data
