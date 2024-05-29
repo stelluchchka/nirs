@@ -78,6 +78,21 @@ class PC:
                 print(f"Time stacking data: {end:.3f} s")
             self.points, self.intensity, self.rgb, self.index, self.gps_time = points, intensity, rgb, index, gps_time
 
+        if file_path.endswith('.csv'):
+            """ open .csv """
+            if verbose:
+                start = time()
+                print(f"Opening .csv file ...")
+            df = pd.read_csv(file_path)
+            self.points = df[['x', 'y', 'z']].values if 'x' in df.columns else None
+            self.intensity = df['intensity'].values if 'intensity' in df.columns else None
+            self.gps_time = df['GpsTime'].values if 'GpsTime' in df.columns else None
+            self.index = df['index'].values if 'index' in df.columns else None
+            self.rgb = df['rgb'].values if 'rgb' in df.columns else None
+            if verbose:
+                end = time()-start
+                print(f"Time stacking data: {end:.3f} s")
+
     def save(self, file_path, verbose = False):
         """ save .pcd """
         if file_path.endswith('.pcd'):
