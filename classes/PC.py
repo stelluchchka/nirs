@@ -4,7 +4,7 @@ from time import time
 from .PC_UTILS import PC_UTILS
 import laspy
 import pandas as pd
-
+from pdal import Pipeline
 
 class PC:
     def __init__(self, points = None, intensity = None, rgb = None, index = None, gps_time = None):
@@ -25,17 +25,14 @@ class PC:
                 end = time()-start
                 print(f"Time reading: {end:.3f} s")
                 start = time()
-            points = data[:,ix:ix + 3]
-            rgb = np.asarray(data[:,ir]) if ir is not None else None
-            rgb = np.nan_to_num(rgb)
-            intensity = np.asarray(data[:,ii]) if ii is not None else None
-            intensity = np.nan_to_num(intensity)
-            gps_time = np.nan_to_num(np.asarray(data[:,ig])) if ig is not None else None
-            index = np.nan_to_num(np.asarray(data[:,iid])) if iid is not None else None
+            self.points = data[:,ix:ix + 3]
+            self.rgb = np.nan_to_num(np.asarray(data[:,ir])) if ir is not None else None
+            self.intensity = np.nan_to_num(np.asarray(data[:,ii])) if ii is not None else None
+            self.gps_time = np.nan_to_num(np.asarray(data[:,ig])) if ig is not None else None
+            self.index = np.nan_to_num(np.asarray(data[:,iid])) if iid is not None else None
             if verbose:
                 end = time()-start
                 print(f"Time stacking data: {end:.3f} s")
-            self.points, self.intensity, self.rgb, self.index, self.gps_time = points, intensity, rgb, index, gps_time
 
         if file_path.endswith('.las'):
             """ open .las """
@@ -44,39 +41,65 @@ class PC:
                 print(f"Opening .las file ...")
             las = laspy.read(file_path)
             points = np.vstack([las.points.x, las.points.y, las.points.z]).transpose()
-            intensity = np.full(points.shape[0], 0)
-            rgb = np.full(points.shape[0], 0)
-            index = np.full(points.shape[0], 0)
-            gps_time = np.full(points.shape[0], 0)
-            for dimension in las.point_format.dimensions:
-                print(dimension.name)
+            self.points = points
+            # for dimension in las.point_format.dimensions:
+            #     print(dimension.name)
             try:
-                intensity = np.asarray(las.intensity, dtype=np.int32)
-                intensity = np.nan_to_num(intensity)
+                self.intensity = np.nan_to_num(np.asarray(las.intensity, dtype=np.int32))
             except AttributeError:
-                pass
+                self.intensity = np.full(points.shape[0], 0)
             try:
                 red = np.asarray(las.red, dtype=np.int32)
                 green = np.asarray(las.green, dtype=np.int32)
                 blue = np.asarray(las.blue, dtype=np.int32)
-                rgb = PC_UTILS.get_color_float(red, green, blue)
-                rgb = np.nan_to_num(rgb)
+                self.rgb = np.nan_to_num(PC_UTILS.get_color_float(red, green, blue))
             except AttributeError:
-                pass
+                self.rgb = np.full(points.shape[0], 0)
             try:
-                index = np.asarray(las.point_source_id, dtype=np.float16)
-                index = np.nan_to_num(index)
+                self.index = np.nan_to_num(np.asarray(las.point_source_id, dtype=np.float16))
             except AttributeError:
-                pass
+                self.index = np.full(points.shape[0], 0)
             try:
-                gps_time = np.asarray(las.GpsTime, dtype=np.float16)
-                gps_time = np.nan_to_num(gps_time)
+                self.gps_time = np.nan_to_num(np.asarray(las.GpsTime, dtype=np.float16))
             except AttributeError:
-                pass
+                self.gps_time = np.full(points.shape[0], 0)
             if verbose:
                 end = time()-start
                 print(f"Time stacking data: {end:.3f} s")
-            self.points, self.intensity, self.rgb, self.index, self.gps_time = points, intensity, rgb, index, gps_time
+
+        if file_path.endswith('.laz'):
+            """ open .laz """
+            if verbose:
+                start = time()
+                print(f"Opening .laz file ...")
+            with laspy.open("/Users/stella/projects/nirs2/content/01_05.laz") as fh:
+                las = fh.read()
+                points = np.vstack([las.points.x, las.points.y, las.points.z]).transpose()
+                self.points = points
+                # for dimension in las.point_format.dimensions:
+                #     print(dimension.name)
+                try:
+                    self.intensity = np.nan_to_num(np.asarray(las.intensity, dtype=np.int32))
+                except AttributeError:
+                    self.intensity = np.full(points.shape[0], 0)
+                try:
+                    red = np.asarray(las.red, dtype=np.int32)
+                    green = np.asarray(las.green, dtype=np.int32)
+                    blue = np.asarray(las.blue, dtype=np.int32)
+                    self.rgb = np.nan_to_num(PC_UTILS.get_color_float(red, green, blue))
+                except AttributeError:
+                    self.rgb = np.full(points.shape[0], 0)
+                try:
+                    self.index = np.nan_to_num(np.asarray(las.point_source_id, dtype=np.float16))
+                except AttributeError:
+                    self.index = np.full(points.shape[0], 0)
+                try:
+                    self.gps_time = np.nan_to_num(np.asarray(las.GpsTime, dtype=np.float16))
+                except AttributeError:
+                    self.gps_time = np.full(points.shape[0], 0)
+            if verbose:
+                end = time()-start
+                print(f"Time stacking data: {end:.3f} s")
 
         if file_path.endswith('.csv'):
             """ open .csv """

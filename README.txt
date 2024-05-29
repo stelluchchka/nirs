@@ -17,9 +17,9 @@ cd ../..
 4. Устанавливаем библиотеки (нужен git)
 pip install numpy
 python -m pip install git+https://github.com/DanielPollithy/pypcd.git
-pip install laspy
 brew install gdal
 brew install pdal
+pip install "laspy[lazrs,laszip]"
 
 5. В shift_rotate.py изменить input_path, output_path, shift_x, shift_y, shift_z, rotation_angle и сохранить
 

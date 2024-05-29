@@ -10,7 +10,7 @@ def shift_rotate(input_path, output_path, shift_x, shift_y, shift_z, rotation_an
     pc_data.save(output_path, verbose = True)
 
 if __name__ == "__main__" :
-    input_path = "/Users/stella/projects/nirs2/content/01_05.csv"
+    input_path = "/Users/stella/projects/nirs2/content/01_05.laz"
     output_path = "/Users/stella/projects/nirs2/content/output.csv"
     shift_x, shift_y, shift_z = 0, 0, 0
     rotation_angle = 0
